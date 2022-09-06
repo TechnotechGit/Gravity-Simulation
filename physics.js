@@ -60,8 +60,12 @@ class rgb {
     }
 }
 
-let colors = [
-    
+let colorPalette = [
+    new rgb(51, 153, 255),
+    new rgb(0, 100, 210),
+    new rgb(115, 230, 20),
+    new rgb(0, 204, 136),
+    new rgb(255, 170, 20),
 ]
 
 let pos = {
@@ -72,13 +76,26 @@ let pos = {
     4: new vector2D(0, 700),
     5: new vector2D(500, 1800),
     6: new vector2D(400, 1700),
-    7: new vector2D(300, 1700),
+    7: new vector2D(2000, 1700),
+    8: new vector2D(2000, 2400),
 }
-let velocity = [[0, 0], [40, 0], [20, 0], [20, 0], [20, 0], [40, 0], [40, 0], [60, 0]] // x, y
-let masses = [1000, 1, 10, 1, 1, 2, 2, 2]
-let rad = [25, 10, 5, 5, 5, 5, 4, 5]
+let velocity = [
+    [0, 0], 
+    [40, 0], 
+    [20, 0], 
+    [20, 0], 
+    [20, 0], 
+    [40, 0], 
+    [40, 0], 
+    [20, -40],
+    [28, -40],
+] // x, y
+let masses = [1000, 1, 10, 1, 1, 2, 2, 200, 2]
+let rad = [25, 10, 5, 5, 5, 5, 4, 20, 7]
 
-let locations = [[], [], [], [], [], [], [], []]
+let locations = [[], [], [], [], [], [], [], [], []]
+
+let colors = []
 
 let index = 0;
 
@@ -109,13 +126,19 @@ document.addEventListener("DOMContentLoaded", function () {
     objects = []
     // console.log(pos[0])
     for (let i = 0; i < Object.keys(pos).length; i++) {
+        colors.push(
+            colorPalette[Math.floor(Math.random() * colorPalette.length)]
+        )
+    }
+    for (let i = 0; i < Object.keys(pos).length; i++) {
         objects.push(new drawCircle(
             ctx,
             pos[i].x, pos[i].y,
             rad[i],
             zoom,
-            "rgba(200, 200, 200)"
+            `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`
         ))
+
     }
     // console.log(objects)
 
@@ -220,9 +243,9 @@ document.addEventListener("DOMContentLoaded", function () {
         function main(currentTime) {
             if (follow == true) {
                 // console.log(objects.length)
-                if (!index || index > objects.length || index < 0) {
-                    finalX = -(pos[0].x * (zoom * zoomScale))
-                    finalY = (pos[0].y * (zoom * zoomScale))
+                if (!index || !lastIndex || index >= objects.length || index < 0) {
+                    finalX = -(pos[lastIndex].x * (zoom * zoomScale))
+                    finalY = (pos[lastIndex].y * (zoom * zoomScale))
                 } else {
                     if (index != lastIndex) {
                         flag = true;
@@ -247,8 +270,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
             if (!index || index > objects.length || index < 0) {
-                console.log(lastIndex)
                 lastIndex = lastIndex
+                
             } else {
                 lastIndex = index
             }
@@ -269,16 +292,16 @@ document.addEventListener("DOMContentLoaded", function () {
                         // 6.67430 * (10 ** 0)
                         let forceX = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
                         let forceY = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
-
+                        
                         velocity[i] = [velocity[i][0] + (forceX), velocity[i][1] + forceY]
                     }
                 }
-
+                
                 // console.table({ "distance": distance, "forceX": forceX, "forceY": forceY, "angle": angle, "vx": (forceX/oMass)*elapsedSinceLastLoop, "pos": pos })
                 let newX = (canvas.width / 2) + finalX + (pos[i].x * (zoom * zoomScale) + velocity[i][0] * (zoom * zoomScale))
                 let newY = (canvas.height / 2) + finalY - (pos[i].y * (zoom * zoomScale) + velocity[i][1] * (zoom * zoomScale))
                 pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
-
+                
                 objects[i].update(newX, newY, zoom)
                 locations[i].push(new vector2D(pos[i].x, pos[i].y))
                 if (locations[i].length == 100) {
@@ -287,19 +310,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (locations[i].length >= 2) {
                     // ctx.beginPath();
                     // ctx.lineWidth = "2";
-                    ctx.strokeStyle = "rgba(200, 200, 200, 1)";
-                    // ctx.moveTo((canvas.width / 2) + locations[i][0].x * (zoom * 0.01), (canvas.height / 2) - locations[i][0].y * (zoom * 0.01));
-                    // console.log(locations[i])
-                    // console.log(locations[i].length)
+                    ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
+
                     for (let m = 1; m < locations[i].length; m++) {
                         ctx.beginPath();
-                        ctx.lineWidth = `${4 * (0.01 * m) * (zoom * 0.01)}`;
+                        ctx.lineWidth = `${40 * (0.01 * m) * (zoom * zoomScale)}`;
                         ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
-                        ctx.strokeStyle = `rgba(200, 200, 200, ${(0.01 * m)})`;
+                        ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
                         ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
                         ctx.stroke();
                         ctx.closePath();
                     }
+
+                    // for (let m = 1; m < locations[i].length; m++) {
+                    //     ctx.beginPath();
+                    //     ctx.fillStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
+                    //     ctx.arc(
+                    //         (canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale),
+                    //         (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale),
+                    //         `${20 * (0.01 * m) * (zoom * zoomScale)}`, 0, 2 * Math.PI, false
+                    //     )
+                    //     ctx.fill()
+                    // }
+
+
                 }
             }
             window.requestAnimationFrame(main);
