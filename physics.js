@@ -1,74 +1,3 @@
-// import QuantityInput from './quantity.js';
-/**
- *  @class
- *  @function Quantity
- *  @param {DOMobject} element to create a quantity wrapper around
- */
-class QuantityInput {
-    constructor(self, decreaseText, increaseText) {
-        // Create input
-        this.input = document.createElement('input');
-        this.input.value = 1;
-        this.input.type = 'number';
-        this.input.name = 'quantity';
-        this.input.pattern = '[0-9]+';
-
-        // Get text for buttons
-        this.decreaseText = decreaseText || 'Decrease quantity';
-        this.increaseText = increaseText || 'Increase quantity';
-
-        // Button constructor
-        function Button(text, className) {
-            this.button = document.createElement('button');
-            this.button.type = 'button';
-            this.button.innerHTML = text;
-            this.button.title = text;
-            this.button.classList.add(className);
-
-            return this.button;
-        }
-
-        // Create buttons
-        this.subtract = new Button(this.decreaseText, 'sub');
-        this.add = new Button(this.increaseText, 'add');
-
-        // Add functionality to buttons
-        this.subtract.addEventListener('click', () => this.change_quantity(-1));
-        this.add.addEventListener('click', () => this.change_quantity(1));
-
-        // Add input and buttons to wrapper
-        self.appendChild(this.subtract);
-        self.appendChild(this.input);
-        self.appendChild(this.add);
-    }
-
-    change_quantity(change) {
-        // Get current value
-        let quantity = Number(this.input.value);
-
-        // Ensure quantity is a valid number
-        if (isNaN(quantity)) quantity = 1;
-
-        // Change quantity
-        quantity += change;
-
-        // Ensure quantity is always a number
-        quantity = Math.max(quantity, 1);
-
-        // Output number
-        this.input.value = quantity;
-    }
-}
-
-(function () {
-    let quantities = document.querySelectorAll('[data-quantity]');
-    if (quantities instanceof Node) quantities = [quantities];
-    if (quantities instanceof NodeList) quantities = [].slice.call(quantities);
-    if (quantities instanceof Array) {
-        quantities.forEach(div => (div.quantity = new QuantityInput(div, 'Down', 'Up')));
-    }
-})();
-
 function drawCircle(ctx, x, y, radius, zoom, fill, stroke, strokeWidth) {
     ctx.beginPath()
     this.x = x
@@ -123,6 +52,18 @@ class vector2D {
     }
 }
 
+class rgb {
+    constructor(r, g, b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+}
+
+let colors = [
+    
+]
+
 let pos = {
     0: new vector2D(0, 0),
     1: new vector2D(0, 800),
@@ -138,6 +79,27 @@ let masses = [1000, 1, 10, 1, 1, 2, 2, 2]
 let rad = [25, 10, 5, 5, 5, 5, 4, 5]
 
 let locations = [[], [], [], [], [], [], [], []]
+
+let index = 0;
+
+
+let follow = false
+function track() {
+    // Get the checkbox
+    follow = document.getElementById("switch").checked;
+    // console.log(follow)
+}
+const indexHandler = function (e) {
+    index = e.value;
+    console.log(index)
+}
+
+// b - beginning position
+// e - ending position
+// i - your current value (0-99)
+function getTween(b, e, i) {
+    return b + ((i / 99) * (e - b));
+}
 
 document.addEventListener("DOMContentLoaded", function () {
     const canvas = document.getElementById('canvas');
@@ -184,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const resize = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        ctx.fillStyle = '#222';
+        ctx.fillStyle = '#181818';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // centerX = canvas.width / 2;
@@ -222,7 +184,7 @@ document.addEventListener("DOMContentLoaded", function () {
             deltaX = dragX - initX, deltaY = dragY - initY;
             initX = e.pageX, initY = e.pageY;
             // console.log("X: "+dragX+" Y: "+dragY);
-            console.log("X: " + deltaX + " Y: " + deltaY);
+            // console.log("X: " + deltaX + " Y: " + deltaY);
             if (follow == false) {
                 finalX += deltaX
                 finalY += deltaY
@@ -235,9 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-    // console.log(Object.values(pos)[0][1])
 
-    // let location = []
     let oMass = 1
     let angle = 0
 
@@ -251,70 +211,103 @@ document.addEventListener("DOMContentLoaded", function () {
     let vx
     let vy
 
-    let follow = false
+    let tween = 0;
+    let lastIndex = 0;
+    let flag = false;
+    let tweenIndex = 0;
 
-        ; (() => {
-            function main(currentTime) {
-                // if (follow == true) {
-                //     finalX = -(pos[0].x * (zoom * 0.01))
-                //     finalY = (pos[0].y * (zoom * 0.01))
-                // }
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                if (!startingTime) { startingTime = currentTime; }
-                if (!lastTime) { lastTime = currentTime; }
-                totalElapsedTime = (currentTime - startingTime);
-                elapsedSinceLastLoop = (currentTime - lastTime);
-                lastTime = currentTime;
-                resize()
-
-                for (let i = 0; i < objects.length; i++) {
-                    for (let k = 0; k < objects.length; k++) {
-                        if (k == i) { } else {
-                            distance = [pos[i].x - pos[k].x, pos[i].y - pos[k].y]
-                            distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
-                            // 6.67430 * (10 ** 0)
-                            let forceX = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
-                            let forceY = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
-
-                            velocity[i] = [velocity[i][0] + (forceX), velocity[i][1] + forceY]
-                        }
+    ; (() => {
+        function main(currentTime) {
+            if (follow == true) {
+                // console.log(objects.length)
+                if (!index || index > objects.length || index < 0) {
+                    finalX = -(pos[0].x * (zoom * zoomScale))
+                    finalY = (pos[0].y * (zoom * zoomScale))
+                } else {
+                    if (index != lastIndex) {
+                        flag = true;
+                        tweenIndex = lastIndex
+                        tween = 0;
                     }
-
-                    // console.table({ "distance": distance, "forceX": forceX, "forceY": forceY, "angle": angle, "vx": (forceX/oMass)*elapsedSinceLastLoop, "pos": pos })
-                    let newX = (canvas.width / 2) + finalX + (pos[i].x * (zoom * zoomScale) + velocity[i][0] * (zoom * zoomScale))
-                    let newY = (canvas.height / 2) + finalY - (pos[i].y * (zoom * zoomScale) + velocity[i][1] * (zoom * zoomScale))
-                    pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
-
-                    objects[i].update(newX, newY, zoom)
-                    locations[i].push(new vector2D(pos[i].x, pos[i].y))
-                    if (locations[i].length == 100) {
-                        locations[i].shift()
-                    }
-                    if (locations[i].length >= 2) {
-                        // ctx.beginPath();
-                        // ctx.lineWidth = "2";
-                        ctx.strokeStyle = "rgba(200, 200, 200, 1)";
-                        // ctx.moveTo((canvas.width / 2) + locations[i][0].x * (zoom * 0.01), (canvas.height / 2) - locations[i][0].y * (zoom * 0.01));
-                        // console.log(locations[i])
-                        // console.log(locations[i].length)
-                        for (let m = 1; m < locations[i].length; m++) {
-                            ctx.beginPath();
-                            ctx.lineWidth = `${4 * (0.01 * m) * (zoom * 0.01)}`;
-                            ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
-                            ctx.strokeStyle = `rgba(200, 200, 200, ${(0.01 * m)})`;
-                            ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
-                            ctx.stroke();
-                            ctx.closePath();
+                    if (flag == true) {
+                        if (tween <= 99) {
+                            // console.table({ "tweenIndex": tweenIndex, "index": index, "pos[index].x": pos[index].x, "pos[tweenIndex].x": pos[tweenIndex].x })
+                            // console.log(getTween(pos[index].x, pos[tweenIndex].x, tween))
+                            finalX = -(getTween(pos[tweenIndex].x, pos[index].x, tween) * (zoom * zoomScale))
+                            finalY = (getTween(pos[tweenIndex].y, pos[index].y, tween) * (zoom * zoomScale))
+                            tween++
                         }
+                        if (tween == 99) {
+                            flag = false
+                        }
+                    } else {
+                        finalX = -(pos[index].x * (zoom * zoomScale))
+                        finalY = (pos[index].y * (zoom * zoomScale))
                     }
                 }
-                window.requestAnimationFrame(main);
-
-                // Your main loop contents
             }
+            if (!index || index > objects.length || index < 0) {
+                console.log(lastIndex)
+                lastIndex = lastIndex
+            } else {
+                lastIndex = index
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            main(); // Start the cycle
-        })();
+            if (!startingTime) { startingTime = currentTime; }
+            if (!lastTime) { lastTime = currentTime; }
+            totalElapsedTime = (currentTime - startingTime);
+            elapsedSinceLastLoop = (currentTime - lastTime);
+            lastTime = currentTime;
+            resize()
+
+            for (let i = 0; i < objects.length; i++) {
+                for (let k = 0; k < objects.length; k++) {
+                    if (k == i) { } else {
+                        distance = [pos[i].x - pos[k].x, pos[i].y - pos[k].y]
+                        distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
+                        // 6.67430 * (10 ** 0)
+                        let forceX = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
+                        let forceY = ((1) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
+
+                        velocity[i] = [velocity[i][0] + (forceX), velocity[i][1] + forceY]
+                    }
+                }
+
+                // console.table({ "distance": distance, "forceX": forceX, "forceY": forceY, "angle": angle, "vx": (forceX/oMass)*elapsedSinceLastLoop, "pos": pos })
+                let newX = (canvas.width / 2) + finalX + (pos[i].x * (zoom * zoomScale) + velocity[i][0] * (zoom * zoomScale))
+                let newY = (canvas.height / 2) + finalY - (pos[i].y * (zoom * zoomScale) + velocity[i][1] * (zoom * zoomScale))
+                pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
+
+                objects[i].update(newX, newY, zoom)
+                locations[i].push(new vector2D(pos[i].x, pos[i].y))
+                if (locations[i].length == 100) {
+                    locations[i].shift()
+                }
+                if (locations[i].length >= 2) {
+                    // ctx.beginPath();
+                    // ctx.lineWidth = "2";
+                    ctx.strokeStyle = "rgba(200, 200, 200, 1)";
+                    // ctx.moveTo((canvas.width / 2) + locations[i][0].x * (zoom * 0.01), (canvas.height / 2) - locations[i][0].y * (zoom * 0.01));
+                    // console.log(locations[i])
+                    // console.log(locations[i].length)
+                    for (let m = 1; m < locations[i].length; m++) {
+                        ctx.beginPath();
+                        ctx.lineWidth = `${4 * (0.01 * m) * (zoom * 0.01)}`;
+                        ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
+                        ctx.strokeStyle = `rgba(200, 200, 200, ${(0.01 * m)})`;
+                        ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+            }
+            window.requestAnimationFrame(main);
+
+            // Your main loop contents
+        }
+
+        main(); // Start the cycle
+    })();
 });
 
