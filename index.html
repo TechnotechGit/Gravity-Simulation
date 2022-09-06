@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Gravity</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="./physics.js"></script>
+    <!-- <script type="text/javascript" src="./quantity.js"></script> -->
+    <link rel="stylesheet" href="index.css">
+    <link href="./style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <!-- Overlay -->
+    <div class="overlay">
+        <h2 style="margin-bottom: -5px;">Controls</h2>
+        <p>Focus object</p>
+        <label class="switch">
+            <input type="checkbox">
+            <span class="slider round"></span>
+        </label>
+        <br>
+        <p>Index</p>
+        <!-- <input type="number"></input> -->
+        <fieldset data-quantity>
+            <legend>Change quantity</legend>
+        </fieldset>
+    </div>
+</body>
