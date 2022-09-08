@@ -71,16 +71,24 @@ input[type=number]::-webkit-outer-spin-button {
     transition: .4s;
 }
 
-.slider:before {
+.slider::before {
     position: absolute;
     content: "";
     height: 26px;
     width: 26px;
     left: 4px;
     bottom: 4px;
-    background-color: white;
+    background-color: rgb(255, 255, 255);
     -webkit-transition: .4s;
     transition: .4s;
+}
+
+input:disabled+.slider:before {
+    background-color: rgb(74, 74, 74);
+}
+
+input:disabled+.slider {
+    pointer-events: none;
 }
 
 input:checked+.slider {

@@ -20,6 +20,15 @@
         <br>
         <p>Index</p>
         <input id="index" oninput="indexHandler(this)" type="number" value="0"></input>
-      
+        <p>Focus camera on player</p>
+        <label class="switch">
+            <input id="camera" class="disabled" type="checkbox" onclick="trackPlayer()">
+            <span class="slider round"></span>
+        </label>
+        <p>Trails relative to screen</p>
+        <label class="switch">
+            <input id="screen" type="checkbox" onclick="cameraTracers()">
+            <span class="slider round"></span>
+        </label>
     </div>
 </body>
