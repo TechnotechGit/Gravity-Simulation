@@ -140,13 +140,16 @@ let colorPalette = [
 
 let initial = {
     0: new object2D(new vector2D(0, 0), [0, 0], 5000000, 400),
-    1: new object2D(new vector2D(0, 35000), [250, 0], 20000, 40),
-    2: new object2D(new vector2D(0, 55000), [270, 0], 5000, 40),
-    3: new object2D(new vector2D(0, 85000), [230, 0], 6000, 40),
+    1: new object2D(new vector2D(100000, -20000), [-100, 100], 5000000, 400),
+    2: new object2D(new vector2D(20000, 80000), [200, 0], 5000000, 400),
+    3: new object2D(new vector2D(-10000, 30000), [300, -200], 5000, 200),
+    4: new object2D(new vector2D(10000, 40000), [-300, -200], 5000, 200),
+    5: new object2D(new vector2D(80000, 10000), [-300, -200], 5000, 200),
+
 }
 
-let playerPos = new vector2D(0, 35500)
-let playerV = new vector2D(250, 0)
+let playerPos = new vector2D(0, 25000)
+let playerV = new vector2D(400, 0)
 
 // let initial = {
 //     0: new object2D(new vector2D(0, 3000), [20, 0], 1, 5),
@@ -276,15 +279,16 @@ document.addEventListener("DOMContentLoaded", function () {
     resize()
     window.addEventListener('resize', resize)
     // console.log(canvas)
+    let zoomTarget = 20
     $(document).bind('mousewheel', function (evt) {
         let delta = evt.originalEvent.wheelDelta
-        zoom += delta
-        finalX += delta * ((zoom * zoomScale))
+        zoomTarget += delta * 0.5
+        // finalX += delta * ((zoom * zoomScale))
         //- (canvas.width / 2) * (zoom * zoomScale)
         // console.log(finalX)
         // console.log(zoom*zoomScale)
-        if (zoom <= 2) {
-            zoom = 2
+        if (zoomTarget <= 2) {
+            zoomTarget = 2
         }
     });
 
@@ -293,6 +297,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let dragX = 0, dragY = 0
     let deltaX = 0, deltaY = 0
     let finalX = 0, finalY = 0
+
+    let targetX = 0, targetY = 0
 
     $(canvas).bind("mousedown", function (e) {
         down = true
@@ -310,12 +316,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // console.log("X: "+dragX+" Y: "+dragY);
             // console.log("X: " + deltaX + " Y: " + deltaY);
             if (follow == false) {
-                finalX += deltaX
-                finalY += deltaY
+                targetX += (deltaX / zoom) * 30
+                targetY += (deltaY / zoom) * 30
             }
         }
     });
-    
+
     $(canvas).bind("mouseup", function () {
         down = false
     });
@@ -392,228 +398,228 @@ document.addEventListener("DOMContentLoaded", function () {
     // }, true);
     let lerpScale = 0.4
     let gConstant = 0.01
+    let camFollow = false
 
-    ; (() => {
-        function main(currentTime) {
-            let lerpN = Math.min(0.8 * zoom * zoomScale * (1 - lerpScale) + 0.8 * lerpScale, 1)
-            // console.log(lastIndex)
-            if (follow == true) {
-                let follow2D = new vector2D(0, 0)
-                // console.log(parseInt(index) + " - index")
-                // console.log(objects.length + " - length")
-                if (!index || parseInt(index) >= objects.length || index < 0) {
-                    follow2D.x = pos[lastIndex].x
-                    follow2D.y = pos[lastIndex].y
+        ; (() => {
+            function main(currentTime) {
+                let lerpN = Math.min(0.8 * zoom * zoomScale * (1 - lerpScale) + 0.8 * lerpScale, 1)
+
+                // Zoom
+                zoom = lerp(zoom, zoomTarget, 0.05)
+
+                if (follow == true) {
+                    camFollow = true
+                    let follow2D = new vector2D(0, 0)
+                    // console.log(parseInt(index) + " - index")
+                    // console.log(objects.length + " - length")
+                    if (!index || parseInt(index) >= objects.length || index < 0) {
+                        follow2D.x = pos[lastIndex].x
+                        follow2D.y = pos[lastIndex].y
+                    } else {
+                        follow2D.x = pos[index].x
+                        follow2D.y = pos[index].y
+                    }
+
+                    finalX = -lerp(cameraPos.x, follow2D.x, lerpN) * (zoom * zoomScale)
+                    finalY = lerp(cameraPos.y, follow2D.y, lerpN) * (zoom * zoomScale)
+                    cameraPos.x = lerp(cameraPos.x, follow2D.x, lerpN)
+                    cameraPos.y = lerp(cameraPos.y, follow2D.y, lerpN)
+
+                    targetX = cameraPos.x
+                    targetY = cameraPos.y
+
+                } else if (playerCam == true) {
+                    camFollow = true
+                    // -((playerPos.x + lastCamPos.x) / 2 * (zoom * zoomScale))
+                    finalX = -lerp(cameraPos.x, playerPos.x, lerpN) * (zoom * zoomScale)
+                    finalY = lerp(cameraPos.y, playerPos.y, lerpN) * (zoom * zoomScale)
+                    cameraPos.x = lerp(cameraPos.x, playerPos.x, lerpN)
+                    cameraPos.y = lerp(cameraPos.y, playerPos.y, lerpN)
+                    
+                    targetX = -cameraPos.x * (zoom * zoomScale)
+                    targetY = cameraPos.y * (zoom * zoomScale)
                 } else {
-                    follow2D.x = pos[index].x
-                    follow2D.y = pos[index].y
+                    camFollow = false
+                    finalX = lerp(cameraPos.x, targetX, 0.1) * (zoom * 0.1)
+                    finalY = lerp(cameraPos.y, targetY, 0.1) * (zoom * 0.1)
+                    cameraPos.x = lerp(cameraPos.x, targetX, 0.1)
+                    cameraPos.y = lerp(cameraPos.y, targetY, 0.1)
                 }
-                // if (index != lastIndex) {
-                //     // flag = true;
-                //     tweenIndex = lastIndex
-                //     // tween = 0;
-                // }
-                finalX = -lerp(cameraPos.x, follow2D.x, lerpN) * (zoom * zoomScale)
-                finalY = lerp(cameraPos.y, follow2D.y, lerpN) * (zoom * zoomScale)
-                // if (flag == true) {
-                // if (tween <= 99) {
-                //     console.table({ "tweenIndex": tweenIndex, "index": index, "pos[index].x": pos[index].x, "pos[tweenIndex].x": pos[tweenIndex].x })
-                //     console.log(getTween(pos[index].x, pos[tweenIndex].x, tween))
-                //     finalX = -(getTween(pos[tweenIndex].x, pos[index].x, tween) * (zoom * zoomScale))
-                //     finalY = (getTween(pos[tweenIndex].y, pos[index].y, tween) * (zoom * zoomScale))
-                //     tween++
-                // }
-                // if (tween == 99) {
-                //     flag = false
-                // }
-                //     } else {
-                //         finalX = -(pos[index].x * (zoom * zoomScale))
-                //         finalY = (pos[index].y * (zoom * zoomScale))
-                //     }
-                // }
-                cameraPos.x = lerp(cameraPos.x, follow2D.x, lerpN)
-                cameraPos.y = lerp(cameraPos.y, follow2D.y, lerpN)
-
-                // console.table({ "playerPos": playerPos.x, "camPos": cameraPos.x, "x": follow2D.x })
-
-                // }
-            } else if (playerCam == true) {
-                // -((playerPos.x + lastCamPos.x) / 2 * (zoom * zoomScale))
-                finalX = -lerp(cameraPos.x, playerPos.x, lerpN) * (zoom * zoomScale)
-                finalY = lerp(cameraPos.y, playerPos.y, lerpN) * (zoom * zoomScale)
-                cameraPos.x = lerp(cameraPos.x, playerPos.x, lerpN)
-                cameraPos.y = lerp(cameraPos.y, playerPos.y, lerpN)
-            }
-            if (!index || index >= objects.length || index < 0) {
-                lastIndex = lastIndex
-            } else {
-                lastIndex = index
-            }
-            // console.table({ "playerPos": playerPos.x, "camPos": cameraPos.x, finalX: finalX })
-            
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!startingTime) { startingTime = currentTime; }
-            if (!lastTime) { lastTime = currentTime; }
-            totalElapsedTime = (currentTime - startingTime);
-            elapsedSinceLastLoop = (currentTime - lastTime);
-            lastTime = currentTime;
-            resize()
-            
-            let sL = 100
-            for (let i = 0; i < objects.length; i++) {
-                for (let k = 0; k < objects.length; k++) {
-                    if (k == i) { } else {
-                        distance = [pos[i].x - pos[k].x, pos[i].y - pos[k].y]
-                        distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
-                        // 6.67430 * (10 ** 0)
-                        let forceX = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
-                        let forceY = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
-
-                        velocity[i] = [velocity[i][0] + (forceX), velocity[i][1] + forceY]
-                    }
+                
+                // console.log(targetX * (zoom * zoomScale))
+                if (!index || index >= objects.length || index < 0) {
+                    lastIndex = lastIndex
+                } else {
+                    lastIndex = index
                 }
+                // console.table({ "playerPos": playerPos.x, "camPos": cameraPos.x, finalX: finalX })
 
-                // console.table({ "distance": distance, "forceX": forceX, "forceY": forceY, "angle": angle, "vx": (forceX/oMass)*elapsedSinceLastLoop, "pos": pos })
-                let newX = (canvas.width / 2) + finalX + (pos[i].x * (zoom * zoomScale) + velocity[i][0] * (zoom * zoomScale))
-                let newY = (canvas.height / 2) + finalY - (pos[i].y * (zoom * zoomScale) + velocity[i][1] * (zoom * zoomScale))
-                pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
 
-                objects[i].update(newX, newY, zoom)
-                // Location update
-                locations[i].push(new vector2D(pos[i].x, pos[i].y))
-                if (locations[i].length == 100) {
-                    locations[i].shift()
-                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Screen location update
-                if (cameraTracer == true) {
-                    screenLocations[i].push(new vector2D(newX, newY))
-                    if (screenLocations[i].length == sL) {
-                        screenLocations[i].shift()
-                    }
-                }
-                // if (follow == true) {
-                //     lastFollow = true
-                //     screenLocations[i].push(new vector2D(newX, newY))
-                //     if (screenLocations[i].length == sL) {
-                //         screenLocations[i].shift()
-                //     }
-                // } else {
-                //     lastFollow = false
-                // }
-                // && follow == false
-                if (locations[i].length >= 2) {
-                    // ctx.beginPath();
-                    // ctx.lineWidth = "2";
-                    ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
+                if (!startingTime) { startingTime = currentTime; }
+                if (!lastTime) { lastTime = currentTime; }
+                totalElapsedTime = (currentTime - startingTime);
+                elapsedSinceLastLoop = (currentTime - lastTime);
+                lastTime = currentTime;
+                resize()
 
-                    for (let m = 1; m < locations[i].length; m++) {
-                        ctx.beginPath();
-                        ctx.lineWidth = `${20 * (0.01 * m) * (zoom * zoomScale)}`;
-                        ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
-                        ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
-                        ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
-                        ctx.stroke();
-                        ctx.closePath();
+                let sL = 100
+                for (let i = 0; i < objects.length; i++) {
+                    for (let k = 0; k < objects.length; k++) {
+                        if (k == i) { } else {
+                            distance = [pos[i].x - pos[k].x, pos[i].y - pos[k].y]
+                            distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
+                            // 6.67430 * (10 ** 0)
+                            let forceX = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
+                            let forceY = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
+
+                            velocity[i] = [velocity[i][0] + (forceX), velocity[i][1] + forceY]
+                        }
                     }
 
-                    // for (let m = 1; m < locations[i].length; m++) {
-                    //     ctx.beginPath();
-                    //     ctx.fillStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
-                    //     ctx.arc(
-                    //         (canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale),
-                    //         (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale),
-                    //         `${20 * (0.01 * m) * (zoom * zoomScale)}`, 0, 2 * Math.PI, false
-                    //     )
-                    //     ctx.fill()
+                    // console.table({ "distance": distance, "forceX": forceX, "forceY": forceY, "angle": angle, "vx": (forceX/oMass)*elapsedSinceLastLoop, "pos": pos })
+                    let newX = (canvas.width / 2) + finalX + (pos[i].x * (zoom * zoomScale) + velocity[i][0] * (zoom * zoomScale))
+                    let newY = (canvas.height / 2) + finalY - (pos[i].y * (zoom * zoomScale) + velocity[i][1] * (zoom * zoomScale))
+                    pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
+
+                    objects[i].update(newX, newY, zoom)
+                    // Location update
+                    locations[i].push(new vector2D(pos[i].x, pos[i].y))
+                    if (locations[i].length == 100) {
+                        locations[i].shift()
+                    }
+
+                    // Screen location update
+                    if (cameraTracer == true) {
+                        screenLocations[i].push(new vector2D(newX, newY))
+                        if (screenLocations[i].length == sL) {
+                            screenLocations[i].shift()
+                        }
+                    }
+                    // if (follow == true) {
+                    //     lastFollow = true
+                    //     screenLocations[i].push(new vector2D(newX, newY))
+                    //     if (screenLocations[i].length == sL) {
+                    //         screenLocations[i].shift()
+                    //     }
+                    // } else {
+                    //     lastFollow = false
                     // }
+                    // && follow == false
+                    if (locations[i].length >= 2) {
+                        // ctx.beginPath();
+                        // ctx.lineWidth = "2";
+                        // ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
 
-                }
+                        for (let m = 1; m < locations[i].length; m++) {
+                            ctx.beginPath();
+                            // (40 * (0.01 * m) * (zoom * zoomScale)) * 0.1 + (80) * 0.9
+                            ctx.lineWidth = `${(40 * (0.01 * m) * (zoom * zoomScale)) * 0.95 + (40 * (0.01 * m)) * 0.05}`;
+                            ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
+                            ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
+                            ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
+                            ctx.stroke();
+                            ctx.closePath();
+                        }
 
-                if (screenLocations[i].length >= 3 && cameraTracer == true) {
-                    ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
-                    for (let m = 1; m < screenLocations[i].length; m++) {
-                        ctx.beginPath();
-                        ctx.lineWidth = `${30 * (1 / sL * m) * (zoom * zoomScale)}`;
-                        ctx.moveTo(screenLocations[i][m - 1].x, screenLocations[i][m - 1].y);
-                        ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(1 / sL * m)})`;
-                        ctx.lineTo(screenLocations[i][m].x, screenLocations[i][m].y);
-                        ctx.stroke();
-                        ctx.closePath();
+                        // for (let m = 1; m < locations[i].length; m++) {
+                        //     if (Number.isInteger(m / 4) != true) {} else {
+                        //         ctx.fillStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${((1/locations[i].length) * m)})`;
+                        //         ctx.beginPath();
+                        //         ctx.arc(
+                        //             (canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale),
+                        //             (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale),
+                        //             `${200 * ((1/locations[i].length) * m) * (zoom * zoomScale)}`, 0, 2 * Math.PI, false
+                        //         )
+                        //         ctx.fill()
+                        //     }
+                        // }
+
+                    }
+
+                    if (screenLocations[i].length >= 3 && cameraTracer == true) {
+                        // ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
+                        for (let m = 1; m < screenLocations[i].length; m++) {
+                            ctx.beginPath();
+                            ctx.lineWidth = `${(30 * (1 / sL * m) * (zoom * zoomScale))}`;
+                            ctx.moveTo(screenLocations[i][m - 1].x, screenLocations[i][m - 1].y);
+                            ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(1 / sL * m)})`;
+                            ctx.lineTo(screenLocations[i][m].x, screenLocations[i][m].y);
+                            ctx.stroke();
+                            ctx.closePath();
+                        }
                     }
                 }
-            }
-            
-            for (let k = 0; k < objects.length; k++) {
-                distance = [playerPos.x - pos[k].x, playerPos.y - pos[k].y]
-                // console.table({"playerPos.x": playerPos.x, "playerPos.y": playerPos.y, "pos.x": pos[k].x, "pos.y": pos[k].y})
-                distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
-                // 6.67430 * (10 ** 0)
-                let fX = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
-                let fY = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
 
-                playerV.x = playerV.x + fX, playerV.y = playerV.y + fY
-            }
-            
-            if (keyState["ArrowDown"]) {
-                playerV.y -= pMove
-            } if (keyState["ArrowUp"]) {
-                playerV.y += pMove
-            } if (keyState["ArrowLeft"]) {
-                playerV.x -= pMove
-            } if (keyState["ArrowRight"]) {
-                playerV.x += pMove
-            }
-            playerLocations.push(new vector2D(playerPos.x, playerPos.y))
-            if (playerLocations.length == 200) {
-                playerLocations.shift()
-            }
-            for (let m = 1; m < playerLocations.length; m++) {
-                ctx.beginPath();
-                ctx.lineWidth = `${20 * (0.01 * m) * (zoom * zoomScale)}`;
-                ctx.moveTo((canvas.width / 2) + finalX + playerLocations[m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerLocations[m - 1].y * (zoom * zoomScale));
-                ctx.strokeStyle = `rgba(255, 255, 255, ${(0.01 * m)})`;
-                ctx.lineTo((canvas.width / 2) + finalX + playerLocations[m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerLocations[m].y * (zoom * zoomScale));
-                ctx.stroke();
-                ctx.closePath();
-            }
+                for (let k = 0; k < objects.length; k++) {
+                    distance = [playerPos.x - pos[k].x, playerPos.y - pos[k].y]
+                    // console.table({"playerPos.x": playerPos.x, "playerPos.y": playerPos.y, "pos.x": pos[k].x, "pos.y": pos[k].y})
+                    distanceCombined = Math.sqrt(distance[0] ** 2 + distance[1] ** 2)
+                    // 6.67430 * (10 ** 0)
+                    let fX = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[0]
+                    let fY = ((gConstant) * masses[k] * 1) / (distanceCombined ** 2) * -distance[1]
 
-            if (cameraTracer == true) {
-                playerSL.push(new vector2D(playerPos.x, playerPos.y))
-                if (playerSL.length == sL) {
-                    playerSL.shift()
+                    playerV.x = playerV.x + fX, playerV.y = playerV.y + fY
                 }
-                console.log(playerSL)
-            }
-            if (playerSL.length >= 3 && cameraTracer == true) {
-                // ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
-                for (let m = 1; m < playerSL.length; m++) {
+
+                if (keyState["ArrowDown"]) {
+                    playerV.y -= pMove
+                } if (keyState["ArrowUp"]) {
+                    playerV.y += pMove
+                } if (keyState["ArrowLeft"]) {
+                    playerV.x -= pMove
+                } if (keyState["ArrowRight"]) {
+                    playerV.x += pMove
+                }
+                playerLocations.push(new vector2D(playerPos.x, playerPos.y))
+                if (playerLocations.length == 200) {
+                    playerLocations.shift()
+                }
+                for (let m = 1; m < playerLocations.length; m++) {
                     ctx.beginPath();
-                    ctx.lineWidth = `${20 * (1 / sL * m) * (zoom * zoomScale)}`;
-                    ctx.moveTo(playerSL[m - 1].x, playerSL[m - 1].y);
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${(1 / sL * m)})`;
-                    ctx.lineTo(playerSL[m].x, playerSL[m].y);
+                    ctx.lineWidth = `${20 * (0.01 * m) * (zoom * zoomScale)}`;
+                    ctx.moveTo((canvas.width / 2) + finalX + playerLocations[m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerLocations[m - 1].y * (zoom * zoomScale));
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${(0.01 * m)})`;
+                    ctx.lineTo((canvas.width / 2) + finalX + playerLocations[m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerLocations[m].y * (zoom * zoomScale));
                     ctx.stroke();
                     ctx.closePath();
                 }
+
+                if (cameraTracer == true) {
+                    playerSL.push(new vector2D(playerPos.x, playerPos.y))
+                    if (playerSL.length == sL) {
+                        playerSL.shift()
+                    }
+                    // console.log(playerSL)
+                }
+                if (playerSL.length >= 3 && cameraTracer == true) {
+                    // ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, 1)`;
+                    for (let m = 1; m < playerSL.length; m++) {
+                        ctx.beginPath();
+                        ctx.lineWidth = `${20 * (1 / sL * m) * (zoom * zoomScale)}`;
+                        ctx.moveTo(playerSL[m - 1].x, playerSL[m - 1].y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${(1 / sL * m)})`;
+                        ctx.lineTo(playerSL[m].x, playerSL[m].y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+
+                if (playerV.y > 0) {
+                    pA = 0 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
+                } else {
+                    pA = 180 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
+                }
+
+                player.update((canvas.width / 2) + finalX + playerPos.x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerPos.y * (zoom * zoomScale), zoom, pA, 0.1)
+                playerPos.x += playerV.x, playerPos.y += playerV.y
+                window.requestAnimationFrame(main);
+
+                // Your main loop contents
             }
 
-            if (playerV.y > 0) {
-                pA = 0 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
-            } else {
-                pA = 180 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
-            }
-
-            player.update((canvas.width / 2) + finalX + playerPos.x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerPos.y * (zoom * zoomScale), zoom, pA, 0.1)
-            playerPos.x += playerV.x, playerPos.y += playerV.y
-            window.requestAnimationFrame(main);
-
-            // Your main loop contents
-        }
-
-        main(); // Start the cycle
-    })();
+            main(); // Start the cycle
+        })();
 });
 

@@ -4,6 +4,11 @@ body {
     font-family: "DM Sans";
 }
 
+/* canvas {
+    user-select: none !important;
+    pointer-events: none !important;
+} */
+
 .overlay {
     position: absolute;
     top: 10px;
@@ -15,6 +20,12 @@ body {
     background-color: rgba(150, 150, 150, 0.1);
     border: 3px solid rgba(200, 200, 200, 1);
     border-radius: 20px;
+    backdrop-filter: blur(8px);
+}
+
+h2, p {
+    pointer-events: none !important;
+    user-select: none;
 }
 
 input {
