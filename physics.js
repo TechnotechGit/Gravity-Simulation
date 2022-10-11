@@ -112,8 +112,8 @@ class rgb {
 }
 
 class object2D {
-    constructor(vector, velocity, mass, radius) {
-        this.pos = vector
+    constructor(pos, velocity, mass, radius) {
+        this.pos = pos
         this.velocity = velocity
         this.mass = mass
         this.radius = radius
@@ -139,17 +139,17 @@ let colorPalette = [
 ]
 
 let initial = {
-    0: new object2D(new vector2D(0, 0), [0, 0], 5000000, 400),
-    1: new object2D(new vector2D(100000, -20000), [-100, 100], 5000000, 400),
-    2: new object2D(new vector2D(20000, 80000), [200, 0], 5000000, 400),
-    3: new object2D(new vector2D(-10000, 30000), [300, -200], 5000, 200),
-    4: new object2D(new vector2D(10000, 40000), [-300, -200], 5000, 200),
-    5: new object2D(new vector2D(80000, 10000), [-300, -200], 5000, 200),
-
+    0: new object2D(new vector2D(0, 0), [0, 0], 10000, 40),
 }
 
-let playerPos = new vector2D(0, 25000)
-let playerV = new vector2D(400, 0)
+// let initial = {
+//     0: new object2D(new vector2D(0, 0), [0, 0], 5000000, 300),
+//     1: new object2D(new vector2D(0, 20000), [250, 0], 10000, 40),
+
+// }
+
+let playerPos = new vector2D(0, 10000)
+let playerV = new vector2D(10, 0)
 
 // let initial = {
 //     0: new object2D(new vector2D(0, 3000), [20, 0], 1, 5),
@@ -158,24 +158,19 @@ let playerV = new vector2D(400, 0)
 //     3: new object2D(new vector2D(-800, 300), [26, 0], 0.0001, 2),
 // }
 
+// let initial = {
+//     0: new object2D(new vector2D(0, 0), [0, 0], 5000000, 400),
+//     1: new object2D(new vector2D(100000, -20000), [-100, 100], 5000000, 400),
+//     2: new object2D(new vector2D(20000, 80000), [200, 0], 5000000, 400),
+//     3: new object2D(new vector2D(-10000, 30000), [300, -200], 5000, 200),
+//     4: new object2D(new vector2D(10000, 40000), [-300, -200], 5000, 200),
+//     5: new object2D(new vector2D(80000, 10000), [-300, -200], 5000, 200),
+
+// }
 
 
-let pos = []
-let velocity = [] // x, y
-let masses = []
-let rad = []
 
-let locations = []
-let screenLocations = []
-let colors = []
 
-for (let i = 0; i < Object.keys(initial).length; i++) {
-    pos.push(initial[i].pos)
-    velocity.push(initial[i].velocity)
-    masses.push(initial[i].mass)
-    rad.push(initial[i].radius)
-    console.log(initial[i])
-}
 
 let index = 0;
 
@@ -219,6 +214,23 @@ document.addEventListener("DOMContentLoaded", function () {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     // console.log(pos)
+
+    let pos = []
+    let velocity = [] // x, y
+    let masses = []
+    let rad = []
+
+    let locations = []
+    let screenLocations = []
+    let colors = []
+
+    for (let i = 0; i < Object.keys(initial).length; i++) {
+        pos.push(initial[i].pos)
+        velocity.push(initial[i].velocity)
+        masses.push(initial[i].mass)
+        rad.push(initial[i].radius)
+        console.log(initial[i])
+    }
 
 
     objects = []
@@ -290,6 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (zoomTarget <= 2) {
             zoomTarget = 2
         }
+        console.log(zoomTarget)
     });
 
     let down = false;
@@ -299,31 +312,61 @@ document.addEventListener("DOMContentLoaded", function () {
     let finalX = 0, finalY = 0
 
     let targetX = 0, targetY = 0
+    let mouse = new vector2D(0, 0)
 
     $(canvas).bind("mousedown", function (e) {
         down = true
         initX = e.pageX, initY = e.pageY;
+        dragX = e.pageX, dragY = e.pageY;
     });
 
     $(canvas).bind("mousemove", function (e) {
         // console.log(finalX)
+        mouse.x = e.pageX
+        mouse.y = e.pageY
+        
         if (down == true) {
             dragX = e.pageX
             dragY = e.pageY;
 
-            deltaX = dragX - initX, deltaY = dragY - initY;
-            initX = e.pageX, initY = e.pageY;
+            // deltaX = dragX - initX, deltaY = dragY - initY;
+            // initX = e.pageX, initY = e.pageY;
             // console.log("X: "+dragX+" Y: "+dragY);
             // console.log("X: " + deltaX + " Y: " + deltaY);
-            if (follow == false) {
-                targetX += (deltaX / zoom) * 30
-                targetY += (deltaY / zoom) * 30
-            }
+            // if (follow == false) {
+            //     targetX += (deltaX / zoom) * 30
+            //     targetY += (deltaY / zoom) * 30
+            // }
+
+
         }
     });
 
     $(canvas).bind("mouseup", function () {
         down = false
+        pos.push(new vector2D((initX - (canvas.width / 2)) * zoom, 100))
+        // pos.push(new vector2D(finalX + (initX * (zoom * 2.5)) - (canvas.width / 2), -(initY - (canvas.height / 2)) * (zoom * 2.5) + finalY))
+        velocity.push([dragX - initX, -dragY + initY])
+        masses.push(10)
+        rad.push(20)
+        
+        console.log(cameraPos.x * zoom * 0.1, finalX * zoom * 0.1)
+        // console.log(-(canvas.width / 2) + finalX * (zoom * zoomScale) + initX)
+
+        colors.push(
+            colorPalette[Math.floor(Math.random() * colorPalette.length)]
+        )
+
+        objects.push(new drawCircle(
+            ctx,
+            pos[pos.length - 1].x, pos[pos.length - 1].y,
+            rad[pos.length - 1],
+            zoom,
+            `rgba(${colors[pos.length - 1].r}, ${colors[pos.length - 1].g}, ${colors[pos.length - 1].b}, 1)`
+        ))
+        locations.push([])
+        screenLocations.push([])
+        // console.log(initial[i])
     });
 
     $('#switch').change(function () {
@@ -367,7 +410,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    player = new drawTriangle(
+    let player = new drawTriangle(
         ctx,
         0, 0,
         14,
@@ -400,12 +443,33 @@ document.addEventListener("DOMContentLoaded", function () {
     let gConstant = 0.01
     let camFollow = false
 
+
+    let testObject = new drawCircle(
+        ctx,
+        0, 0,
+        20,
+        zoom,
+        `rgb(255, 255, 255)`
+    )
+
+    let cMove = 2
+
         ; (() => {
             function main(currentTime) {
                 let lerpN = Math.min(0.8 * zoom * zoomScale * (1 - lerpScale) + 0.8 * lerpScale, 1)
 
                 // Zoom
                 zoom = lerp(zoom, zoomTarget, 0.05)
+
+                if (keyState["s"]) {
+                    targetY -= cMove
+                } if (keyState["w"]) {
+                    targetY += cMove
+                } if (keyState["d"]) {
+                    targetX -= cMove
+                } if (keyState["a"]) {
+                    targetX += cMove
+                }
 
                 if (follow == true) {
                     camFollow = true
@@ -435,7 +499,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     finalY = lerp(cameraPos.y, playerPos.y, lerpN) * (zoom * zoomScale)
                     cameraPos.x = lerp(cameraPos.x, playerPos.x, lerpN)
                     cameraPos.y = lerp(cameraPos.y, playerPos.y, lerpN)
-                    
+
                     targetX = -cameraPos.x * (zoom * zoomScale)
                     targetY = cameraPos.y * (zoom * zoomScale)
                 } else {
@@ -445,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     cameraPos.x = lerp(cameraPos.x, targetX, 0.1)
                     cameraPos.y = lerp(cameraPos.y, targetY, 0.1)
                 }
-                
+
                 // console.log(targetX * (zoom * zoomScale))
                 if (!index || index >= objects.length || index < 0) {
                     lastIndex = lastIndex
@@ -457,12 +521,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+
                 if (!startingTime) { startingTime = currentTime; }
                 if (!lastTime) { lastTime = currentTime; }
                 totalElapsedTime = (currentTime - startingTime);
                 elapsedSinceLastLoop = (currentTime - lastTime);
                 lastTime = currentTime;
                 resize()
+
+                if (down == true) {
+                    ctx.beginPath()
+                    ctx.lineWidth = `4`;
+                    ctx.moveTo(initX, initY);
+                    ctx.lineTo(dragX, dragY);
+                    // console.table(initX, initY, dragX, dragY)
+                    ctx.strokeStyle = `rgba(255, 255, 255, 1)`;
+                    ctx.stroke();
+                    ctx.closePath();
+                }
+
 
                 let sL = 100
                 for (let i = 0; i < objects.length; i++) {
@@ -484,6 +561,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     pos[i] = new vector2D(pos[i].x + velocity[i][0], pos[i].y + velocity[i][1])
 
                     objects[i].update(newX, newY, zoom)
+                    // if (i == objects.length - 1) console.log(pos[i])
                     // Location update
                     locations[i].push(new vector2D(pos[i].x, pos[i].y))
                     if (locations[i].length == 100) {
@@ -516,8 +594,8 @@ document.addEventListener("DOMContentLoaded", function () {
                             ctx.beginPath();
                             // (40 * (0.01 * m) * (zoom * zoomScale)) * 0.1 + (80) * 0.9
                             ctx.lineWidth = `${(40 * (0.01 * m) * (zoom * zoomScale)) * 0.95 + (40 * (0.01 * m)) * 0.05}`;
-                            ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
                             ctx.strokeStyle = `rgba(${colors[i].r}, ${colors[i].g}, ${colors[i].b}, ${(0.01 * m)})`;
+                            ctx.moveTo((canvas.width / 2) + finalX + locations[i][m - 1].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m - 1].y * (zoom * zoomScale));
                             ctx.lineTo((canvas.width / 2) + finalX + locations[i][m].x * (zoom * zoomScale), (canvas.height / 2) + finalY - locations[i][m].y * (zoom * zoomScale));
                             ctx.stroke();
                             ctx.closePath();
@@ -612,8 +690,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     pA = 180 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
                 }
 
+                
+
                 player.update((canvas.width / 2) + finalX + playerPos.x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerPos.y * (zoom * zoomScale), zoom, pA, 0.1)
                 playerPos.x += playerV.x, playerPos.y += playerV.y
+
+                testObject.update((canvas.width / 2) + finalX + ((mouse.x + (canvas.width / 2)) * (zoom * zoomScale)), 400, zoom)
+
                 window.requestAnimationFrame(main);
 
                 // Your main loop contents
