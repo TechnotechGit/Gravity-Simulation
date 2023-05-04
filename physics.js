@@ -148,9 +148,9 @@ let initial = {
 
 // }
 
-let playerPos = new vector2D(0, 10000)
-let playerV = new vector2D(10, 0)
-
+let playerPos = new vector2D(0, 5000)
+let playerV = new vector2D(20, 0)
+let gConstant = 0.1
 // let initial = {
 //     0: new object2D(new vector2D(0, 3000), [20, 0], 1, 5),
 //     1: new object2D(new vector2D(-800, 0), [0, -10], 200, 20),
@@ -324,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // console.log(finalX)
         mouse.x = e.pageX
         mouse.y = e.pageY
-        
+
         if (down == true) {
             dragX = e.pageX
             dragY = e.pageY;
@@ -349,7 +349,7 @@ document.addEventListener("DOMContentLoaded", function () {
         velocity.push([dragX - initX, -dragY + initY])
         masses.push(10)
         rad.push(20)
-        
+
         console.log(cameraPos.x * zoom * 0.1, finalX * zoom * 0.1)
         // console.log(-(canvas.width / 2) + finalX * (zoom * zoomScale) + initX)
 
@@ -440,7 +440,7 @@ document.addEventListener("DOMContentLoaded", function () {
     //     event.preventDefault();
     // }, true);
     let lerpScale = 0.4
-    let gConstant = 0.01
+    // let gConstant = 0.1
     let camFollow = false
 
 
@@ -690,12 +690,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     pA = 180 + Math.atan(-playerV.x / -playerV.y) * (180 / Math.PI)
                 }
 
-                
+
 
                 player.update((canvas.width / 2) + finalX + playerPos.x * (zoom * zoomScale), (canvas.height / 2) + finalY - playerPos.y * (zoom * zoomScale), zoom, pA, 0.1)
                 playerPos.x += playerV.x, playerPos.y += playerV.y
 
-                testObject.update((canvas.width / 2) + finalX + ((mouse.x + (canvas.width / 2)) * (zoom * zoomScale)), 400, zoom)
+                // testObject.update((canvas.width / 2) + finalX + ((mouse.x + (canvas.width / 2)) * (zoom * zoomScale)), 400, zoom)
 
                 window.requestAnimationFrame(main);
 
